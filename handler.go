@@ -147,7 +147,7 @@ func (s *RPCServer) handleReader(ctx context.Context, r io.Reader, w io.Writer, 
 		rpcError(wf, &req, rpcParseError, xerrors.Errorf("unmarshaling request: %w", err))
 		return
 	}
-
+	LogUnderControl("HTTP", "[Server Request] Request: %s", bufferedRequest)
 	s.handle(ctx, req, wf, rpcError, func(bool) {}, nil)
 }
 

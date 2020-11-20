@@ -87,9 +87,7 @@ type client struct {
 // NewMergeClient is like NewClient, but allows to specify multiple structs
 // to be filled in the same namespace, using one connection
 func NewMergeClient(ctx context.Context, addr string, namespace string, outs []interface{}, requestHeader http.Header, opts ...Option) (ClientCloser, error) {
-	// ======================= custom log ==================================
-	LogUnderControl("Start New jsonRPC Client to %s", addr)
-	// ======================= custom log ==================================
+
 	config := defaultConfig()
 	for _, o := range opts {
 		o(&config)
@@ -102,8 +100,14 @@ func NewMergeClient(ctx context.Context, addr string, namespace string, outs []i
 
 	switch u.Scheme {
 	case "ws", "wss":
+		// ======================= custom log ==================================
+		LogUnderControl("WS", "Start New jsonRPC Client to %s", addr)
+		// ======================= custom log ==================================
 		return websocketClient(ctx, addr, namespace, outs, requestHeader, config)
 	case "http", "https":
+		// ======================= custom log ==================================
+		LogUnderControl("HTTP", "Start New jsonRPC Client to %s", addr)
+		// ======================= custom log ==================================
 		return httpClient(ctx, addr, namespace, outs, requestHeader, config)
 	default:
 		return nil, xerrors.Errorf("unknown url scheme '%s'", u.Scheme)
@@ -142,7 +146,7 @@ func httpClient(ctx context.Context, addr string, namespace string, outs []inter
 		}
 
 		hreq.Header.Set("Content-Type", "application/json")
-
+		LogUnderControl("HTTP", "[Client Request],namespace: %s ,Request: %s , target: %s,", namespace, b, addr)
 		httpResp, err := http.DefaultClient.Do(hreq)
 		if err != nil {
 			return clientResponse{}, err
@@ -161,7 +165,7 @@ func httpClient(ctx context.Context, addr string, namespace string, outs []inter
 		if resp.ID != *cr.req.ID {
 			return clientResponse{}, xerrors.New("request and response id didn't match")
 		}
-
+		LogUnderControl("HTTP", "[Client Request Response],namespace: %v ,Response: %v , target: %v,", namespace, resp, addr)
 		return resp, nil
 	}
 

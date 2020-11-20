@@ -333,7 +333,7 @@ func (c *wsConn) handleChanMessage(frame frame) {
 	// =================== custom log =======================
 	var chmsg string
 	json.Unmarshal(frame.Params[1].data, &chmsg)
-	LogUnderControl("Get a rpc channel %s message %s from %s", chid, chmsg, c.conn.RemoteAddr().String())
+	LogUnderControl("WS", "Get a rpc channel %s message %s from %s", chid, chmsg, c.conn.RemoteAddr().String())
 	// =================== custom log =======================
 }
 
@@ -354,7 +354,7 @@ func (c *wsConn) handleChanClose(frame frame) {
 
 	hnd(nil, false)
 	// =================== custom log =======================
-	LogUnderControl("Close a rpc channel %s from %s", chid, c.conn.RemoteAddr().String())
+	LogUnderControl("WS", "Close a rpc channel %s from %s", chid, c.conn.RemoteAddr().String())
 	// =================== custom log =======================
 }
 
@@ -378,7 +378,7 @@ func (c *wsConn) handleResponse(frame frame) {
 		go c.handleCtxAsync(chanCtx, *frame.ID)
 		// =================== custom log =======================
 
-		LogUnderControl("Build a channel %s from %s", chid, c.conn.RemoteAddr().String())
+		LogUnderControl("WS", "Build a channel %s from %s", chid, c.conn.RemoteAddr().String())
 		// =================== custom log =======================
 	}
 
@@ -390,9 +390,9 @@ func (c *wsConn) handleResponse(frame frame) {
 	}
 	// =================== custom log =======================
 	if frame.Error != nil {
-		LogUnderControl("Get a rpc request error result %v for request %s ,%s from %s", frame.Error.Error(), req.req.ID, req.req.Method, c.conn.RemoteAddr().String())
+		LogUnderControl("WS", "Get a rpc request error result %v for request %s ,%s from %s", frame.Error.Error(), req.req.ID, req.req.Method, c.conn.RemoteAddr().String())
 	} else {
-		LogUnderControl("Get a rpc request result for request %s ,%s from %s", req.req.ID, req.req.Method, c.conn.RemoteAddr().String())
+		LogUnderControl("WS", "Get a rpc request result for request %s ,%s from %s", req.req.ID, req.req.Method, c.conn.RemoteAddr().String())
 	}
 
 	// =================== custom log =======================
@@ -443,7 +443,7 @@ func (c *wsConn) handleCall(ctx context.Context, frame frame) {
 
 	go c.handler.handle(ctx, req, nextWriter, rpcError, done, c.handleChanOut)
 	// =================== custom log =======================
-	LogUnderControl("Get a rpc call %s, %s", req.ID, req.Method)
+	LogUnderControl("WS", "Get a rpc call %s, %s", req.ID, req.Method)
 	// =================== custom log =======================
 }
 
@@ -501,19 +501,19 @@ func (c *wsConn) setupPings() func() {
 	if c.pingInterval == 0 {
 		h := func(message string) error {
 			pongWriteDeadline := time.Now().Add(120 * time.Second)
-			LogUnderControl("Get a ping ,pong write deadline %s to %s", pongWriteDeadline, c.conn.RemoteAddr().String())
+			LogUnderControl("WS", "Get a ping ,pong write deadline %s to %s", pongWriteDeadline, c.conn.RemoteAddr().String())
 			err := c.conn.WriteControl(websocket.PongMessage, []byte(message), pongWriteDeadline)
 			if err == websocket.ErrCloseSent {
-				LogUnderControl("Pong err close sent to %s", c.conn.RemoteAddr().String())
+				LogUnderControl("WS", "Pong err close sent to %s", c.conn.RemoteAddr().String())
 				return nil
 			} else if e, ok := err.(net.Error); ok && e.Temporary() {
-				LogUnderControl("Pong temporary error to %s", c.conn.RemoteAddr().String())
+				LogUnderControl("WS", "Pong temporary error to %s", c.conn.RemoteAddr().String())
 				return nil
 			}
 			if err != nil {
-				LogUnderControl("Pong error %s,to %s", err, c.conn.RemoteAddr().String())
+				LogUnderControl("WS", "Pong error %s,to %s", err, c.conn.RemoteAddr().String())
 			} else {
-				LogUnderControl("Pong to %s", c.conn.RemoteAddr().String())
+				LogUnderControl("WS", "Pong to %s", c.conn.RemoteAddr().String())
 			}
 
 			return err
@@ -526,7 +526,7 @@ func (c *wsConn) setupPings() func() {
 		select {
 		case c.pongs <- struct{}{}:
 			// ======================= custom log ==================================
-			LogUnderControl("Get pong from %s", c.conn.RemoteAddr())
+			LogUnderControl("WS", "Get pong from %s", c.conn.RemoteAddr())
 			// ======================= custom log ==================================
 		default:
 		}
@@ -544,7 +544,7 @@ func (c *wsConn) setupPings() func() {
 					log.Errorf("sending ping message: %+v", err)
 				}
 				// ======================= custom log ==================================
-				LogUnderControl("Send ping to %s", c.conn.RemoteAddr())
+				LogUnderControl("WS", "Send ping to %s", c.conn.RemoteAddr())
 				// ======================= custom log ==================================
 				c.writeLk.Unlock()
 			case <-stop:
@@ -609,7 +609,7 @@ func (c *wsConn) handleWsConn(ctx context.Context) {
 					if !websocket.IsCloseError(c.incomingErr, websocket.CloseNormalClosure) {
 						log.Debugw("websocket error", "error", c.incomingErr)
 						// ======================= custom log ==================================
-						LogUnderControl("Incoming with websocket error,%s", c.incomingErr)
+						LogUnderControl("WS", "Incoming with websocket error,%s", c.incomingErr)
 						// ======================= custom log ==================================
 						// connection dropped unexpectedly, do our best to recover it
 						c.closeInFlight()
@@ -653,7 +653,7 @@ func (c *wsConn) handleWsConn(ctx context.Context) {
 					}
 				}
 				// ======================= custom log ==================================
-				LogUnderControl("Remote close from %s", c.conn.RemoteAddr())
+				LogUnderControl("WS", "Remote close from %s", c.conn.RemoteAddr())
 				// ======================= custom log ==================================
 				return // remote closed
 			}
@@ -674,7 +674,7 @@ func (c *wsConn) handleWsConn(ctx context.Context) {
 			if req.req.ID != nil {
 				if c.incomingErr != nil { // No conn?, immediate fail
 					// ======================= custom log ==================================
-					LogUnderControl("Send request %v to %s error,%s", req, c.conn.RemoteAddr(), c.incomingErr)
+					LogUnderControl("WS", "Send request %v to %s error,%s", req, c.conn.RemoteAddr(), c.incomingErr)
 					// ======================= custom log ==================================
 					req.ready <- clientResponse{
 						Jsonrpc: "2.0",
@@ -689,7 +689,7 @@ func (c *wsConn) handleWsConn(ctx context.Context) {
 				}
 				c.inflight[*req.req.ID] = req
 				// ======================= custom log ==================================
-				LogUnderControl("Send request %s , %s to %s", req.req.ID, req.req.Method, c.conn.RemoteAddr())
+				LogUnderControl("WS", "Send request %s , %s to %s", req.req.ID, req.req.Method, c.conn.RemoteAddr())
 				// ======================= custom log ==================================
 			}
 			c.writeLk.Unlock()
@@ -715,14 +715,14 @@ func (c *wsConn) handleWsConn(ctx context.Context) {
 			c.writeLk.Unlock()
 			log.Errorw("Connection timeout", "remote", c.conn.RemoteAddr())
 			// ======================= custom log ==================================
-			LogUnderControl("Connection timeout to %s", c.conn.RemoteAddr())
+			LogUnderControl("WS", "Connection timeout to %s", c.conn.RemoteAddr())
 			// ======================= custom log ==================================
 			return
 		case <-c.stop:
 			c.writeLk.Lock()
 			cmsg := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
 			// ======================= custom log ==================================
-			LogUnderControl("Close Connect to %s,Send close msg", c.conn.RemoteAddr())
+			LogUnderControl("WS", "Close Connect to %s,Send close msg", c.conn.RemoteAddr())
 			// ======================= custom log ==================================
 			if err := c.conn.WriteMessage(websocket.CloseMessage, cmsg); err != nil {
 				log.Warn("failed to write close message: ", err)

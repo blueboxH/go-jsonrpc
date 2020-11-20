@@ -95,12 +95,12 @@ var checkCustomFlagTime = time.Now()
 var checkCustomFlag = false
 var CommandLogFlag = false
 
-func LogUnderControl(line string, args ...interface{}) {
+func LogUnderControl(protocol string, line string, args ...interface{}) {
 	if time.Since(checkCustomFlagTime).Seconds() > 1 {
 		checkCustomFlagTime = time.Now()
 		checkCustomFlag = Exists("/filecoin/showFilRpcLog")
 	}
 	if checkCustomFlag && CommandLogFlag {
-		log.Infof("== WS == "+line, args...)
+		log.Infof("== "+protocol+" == "+line, args...)
 	}
 }
