@@ -147,7 +147,7 @@ func (s *RPCServer) handleReader(ctx context.Context, r io.Reader, w io.Writer, 
 		rpcError(wf, &req, rpcParseError, xerrors.Errorf("unmarshaling request: %w", err))
 		return
 	}
-	LogUnderControl("HTTP", "[Server Request] Request: %s", bufferedRequest)
+	LogUnderControl("HTTP", "[Server Request] Request: %s", bufferedRequest.String())
 	s.handle(ctx, req, wf, rpcError, func(bool) {}, nil)
 }
 
@@ -319,7 +319,9 @@ func (s *RPCServer) handle(ctx context.Context, req request, w func(func(io.Writ
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
 			log.Error(err)
 			stats.Record(ctx, metrics.RPCResponseError.M(1))
+
 			return
 		}
+		LogUnderControl("HTTP", "[Server Request Response] Response ID: %s, Result: %s, jsonrpc: %s", resp.ID, resp.Result, resp.Jsonrpc)
 	})
 }

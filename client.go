@@ -165,7 +165,9 @@ func httpClient(ctx context.Context, addr string, namespace string, outs []inter
 		if resp.ID != *cr.req.ID {
 			return clientResponse{}, xerrors.New("request and response id didn't match")
 		}
-		LogUnderControl("HTTP", "[Client Request Response],namespace: %v ,Response: %v , target: %v,", namespace, resp, addr)
+		resultJson, _ := resp.Result.MarshalJSON()
+		resultBuffer := bytes.NewBuffer(resultJson)
+		LogUnderControl("HTTP", "[Client Request Response],namespace: %v ,Response: ID: %s,Result: %s, ,target: %v,", namespace, resp.ID, resultBuffer.String(), addr)
 		return resp, nil
 	}
 
